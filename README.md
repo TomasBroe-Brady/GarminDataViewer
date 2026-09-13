@@ -59,7 +59,11 @@ separate strength-training dashboard.
 
 ## See it before you connect anything
 
-To look at the overlay with realistic data — no Docker, no Garmin account:
+There is a [live preview of the overlay](https://claude.ai/code/artifact/44b11ca4-3239-4c7b-be4b-ebfb8fbcd12c)
+running on generated data - no install needed, and nothing connected to a
+real Garmin account.
+
+To run the same thing locally with realistic data — no Docker, no Garmin account:
 
 ```bash
 uv venv .venv
@@ -90,32 +94,34 @@ cd GarminDataViewer
 ./setup.sh
 ```
 
-`setup.sh` creates `.env`, generates random passwords for InfluxDB and Grafana
-(and prints your Grafana login), and prepares the token directory with the
-ownership `garmin-fetch-data` needs.
+That single command does everything:
 
-### 2. Log in to Garmin Connect, once
+1. Checks Docker is installed and actually running, and warns about port clashes
+2. Creates `.env` with generated passwords and detects your timezone
+3. Prepares the token directory with the ownership `garmin-fetch-data` needs
+4. Prompts you to log in to Garmin Connect, and tells you the moment it worked
+5. Starts the stack and waits until Grafana and the overlay are answering
+6. Prints your URLs and Grafana password
 
-```bash
-docker compose run --rm garmin-fetch-data
-```
+At the login step you type your Garmin email and password into your own
+terminal. **The password is never written to disk** — only the OAuth tokens
+Garmin returns are saved, in `./garminconnect-tokens/`, which is git-ignored.
+Setup watches for those tokens and tells you when to press `Ctrl-C` to carry on,
+so you are not guessing from the log output.
 
-Enter your Garmin Connect email and password at the prompt, plus the emailed
-MFA code if you have two-factor enabled. Wait until it starts logging that it
-is fetching data, then press `Ctrl-C`.
-
-> Your **password is never stored**. Only the resulting OAuth tokens are
-> cached, in `./garminconnect-tokens/`, which is git-ignored.
-
-### 3. Start everything
+If anything looks wrong afterwards:
 
 ```bash
-docker compose up -d
+./setup.sh doctor
 ```
+
+It checks Docker, the containers, both HTTP endpoints, whether the overlay can
+reach InfluxDB, whether any Garmin data has actually landed yet, and tails the
+fetcher log — so you get a named problem instead of a wall of container output.
 
 | Service | URL | Notes |
 |---|---|---|
-| Grafana | http://localhost:3000 | Login from `setup.sh`, or `.env` |
+| Grafana | http://localhost:3000 | Login printed by `setup.sh`, also in `.env` |
 | Training Overlay | http://localhost:8787 | No login |
 | InfluxDB | http://localhost:8086 | Rarely accessed directly |
 
@@ -125,7 +131,7 @@ The first backfill pulls your history and can take a while. Follow it with:
 docker compose logs -f garmin-fetch-data
 ```
 
-### 4. Import your training plan
+### 2. Import your training plan
 
 Move your notebook into a spreadsheet. Start from
 [`training_log/TEMPLATE.csv`](training_log/TEMPLATE.csv):
@@ -264,6 +270,9 @@ OVERLAY_DB=../overlay_data/overlay.db \
   putting authentication in front of them.
 
 ## Troubleshooting
+
+**Start here: `./setup.sh doctor`.** It names the failing component rather
+than leaving you to read container logs.
 
 **`garmin-fetch-data` reports permission errors on the token directory.** It
 runs as uid 1000. Run `sudo chown -R 1000:1000 garminconnect-tokens`.
