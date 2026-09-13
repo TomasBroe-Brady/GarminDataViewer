@@ -1,0 +1,18 @@
+line-length = 100
+target-version = "py310"
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "DTZ", "ISC", "BLE"]
+ignore = [
+    # FastAPI's documented idiom is Depends()/Body()/File() in argument
+    # defaults; this rule fights the framework.
+    "B008",
+    # Training days are local calendar dates by definition - a timezone-aware
+    # "now" would be the wrong abstraction here, not a safer one.
+    "DTZ005",
+    "DTZ011",
+]
+
+[lint.per-file-ignores]
+# Tests construct fixtures freely and catch broadly on purpose.
+"overlay/tests/*" = ["BLE001", "DTZ001"]

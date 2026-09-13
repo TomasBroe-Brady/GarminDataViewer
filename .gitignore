@@ -1,0 +1,39 @@
+# Secrets and local config
+.env
+.env.local
+
+# Garmin OAuth tokens - NEVER commit these, they grant access to your account
+# Ignore the contents, not the directory itself - git cannot re-include a
+# file inside an ignored directory, so the trailing /* matters.
+garminconnect-tokens/*
+!garminconnect-tokens/.gitkeep
+
+# Local data
+overlay_data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Your actual training log (keep your own data out of git)
+training_log/*
+!training_log/.gitkeep
+!training_log/TEMPLATE.csv
+!training_log/example.csv
+
+# Raw Garmin exports
+exports/
+*.fit
+*.FIT
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# OS
+.DS_Store
+Thumbs.db

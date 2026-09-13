@@ -1,0 +1,104 @@
+# Garmin Data Viewer
+# ------------------
+# Wellness ingestion + dashboards are provided by garmin-grafana (BSD-3-Clause,
+# https://github.com/arpanghosh8453/garmin-grafana) - we deliberately do not
+# reimplement Garmin's undocumented API.  The `overlay` service is this repo's
+# own addition: it reconciles your written training plan against what the watch
+# actually recorded.
+
+name: garmin-data-viewer
+
+services:
+  # ---------------------------------------------------------------- ingestion
+  garmin-fetch-data:
+    image: thisisarpanghosh/garmin-fetch-data:latest
+    container_name: garmin-fetch-data
+    restart: unless-stopped
+    depends_on:
+      - influxdb
+    volumes:
+      # Persistent OAuth tokens. Your Garmin password is NOT stored here.
+      # This directory must be owned by uid/gid 1000 - ./setup.sh handles that.
+      - ./garminconnect-tokens:/home/appuser/.garminconnect
+    environment:
+      - INFLUXDB_HOST=influxdb
+      - INFLUXDB_PORT=8086
+      - INFLUXDB_USERNAME=${INFLUXDB_USER:-influxdb_user}
+      - INFLUXDB_PASSWORD=${INFLUXDB_PASSWORD:?set INFLUXDB_PASSWORD in .env}
+      - INFLUXDB_DATABASE=${INFLUXDB_DB:-GarminStats}
+      - GARMINCONNECT_IS_CN=${GARMIN_IS_CN:-False}
+      - UPDATE_INTERVAL_SECONDS=${UPDATE_INTERVAL_SECONDS:-300}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - USER_TIMEZONE=${USER_TIMEZONE:-}
+      # Venu 3 records every one of these. Trim the list to fetch less.
+      - FETCH_SELECTION=${FETCH_SELECTION:-daily_avg,sleep,steps,heartrate,stress,breathing,hrv,vo2,activity,race_prediction,body_composition}
+
+  # ------------------------------------------------------------------ storage
+  influxdb:
+    image: influxdb:1.11
+    container_name: influxdb
+    hostname: influxdb
+    restart: unless-stopped
+    environment:
+      - INFLUXDB_DB=${INFLUXDB_DB:-GarminStats}
+      - INFLUXDB_USER=${INFLUXDB_USER:-influxdb_user}
+      - INFLUXDB_USER_PASSWORD=${INFLUXDB_PASSWORD:?set INFLUXDB_PASSWORD in .env}
+      - INFLUXDB_DATA_INDEX_VERSION=tsi1
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+    ports:
+      - '${INFLUXDB_PORT:-8086}:8086'
+
+  # --------------------------------------------------------------- dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    hostname: grafana
+    restart: unless-stopped
+    depends_on:
+      - influxdb
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:?set GRAFANA_PASSWORD in .env}
+      - GF_PLUGINS_PREINSTALL=marcusolsson-hourly-heatmap-panel
+      # Passed through to the provisioned datasource file.
+      - INFLUXDB_USER=${INFLUXDB_USER:-influxdb_user}
+      - INFLUXDB_PASSWORD=${INFLUXDB_PASSWORD}
+      - INFLUXDB_DB=${INFLUXDB_DB:-GarminStats}
+      - GF_DATE_FORMATS_FULL_DATE=MMM Do, YYYY - hh:mm:ss a
+      - GF_DATE_FORMATS_INTERVAL_SECOND=hh:mm:ss a
+      - GF_DATE_FORMATS_INTERVAL_MINUTE=hh:mm a
+      - GF_DATE_FORMATS_INTERVAL_HOUR=MMM DD hh:mm a
+      - GF_DATE_FORMATS_INTERVAL_DAY=MMM DD
+      - GF_DATE_FORMATS_INTERVAL_MONTH=YYYY-MM
+      - GF_DATE_FORMATS_INTERVAL_YEAR=YYYY
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    ports:
+      - '${GRAFANA_PORT:-3000}:3000'
+
+  # ------------------------------------------- this repo's own addition
+  overlay:
+    build: ./overlay
+    container_name: training-overlay
+    restart: unless-stopped
+    depends_on:
+      - influxdb
+    environment:
+      - INFLUXDB_HOST=influxdb
+      - INFLUXDB_PORT=8086
+      - INFLUXDB_USER=${INFLUXDB_USER:-influxdb_user}
+      - INFLUXDB_PASSWORD=${INFLUXDB_PASSWORD:?set INFLUXDB_PASSWORD in .env}
+      - INFLUXDB_DB=${INFLUXDB_DB:-GarminStats}
+      - OVERLAY_DB=/data/overlay.db
+    volumes:
+      - ./overlay_data:/data
+      - ./training_log:/training_log
+    ports:
+      - '${OVERLAY_PORT:-8787}:8787'
+
+volumes:
+  influxdb_data:
+  grafana_data:

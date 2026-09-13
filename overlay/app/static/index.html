@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Training Overlay</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="dot"></span>
+    <h1>Training Overlay</h1>
+  </div>
+  <nav class="range">
+    <label>From <input type="date" id="start"></label>
+    <label>To <input type="date" id="end"></label>
+    <button id="reload" class="primary">Refresh</button>
+    <a class="ghost" href="http://localhost:3000" target="_blank" rel="noopener">Grafana &rarr;</a>
+  </nav>
+</header>
+
+<div id="banner" class="banner" hidden></div>
+
+<main>
+  <section id="summary" class="stat-row" aria-label="Adherence summary"></section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Plan vs actual</h2>
+      <div class="legend">
+        <span class="chip completed">Completed</span>
+        <span class="chip missed">Missed</span>
+        <span class="chip unplanned">Unplanned</span>
+      </div>
+    </div>
+    <div id="weeks"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Import your training log</h2></div>
+    <div class="import-body">
+      <p class="muted">
+        A CSV or Excel file with one row per session. Columns are detected
+        automatically &mdash; a <code>Date</code> column is the only requirement.
+        Preview first to check the mapping before anything is saved.
+      </p>
+      <div class="import-controls">
+        <input type="file" id="file" accept=".csv,.xlsx,.xlsm,.xls">
+        <label class="inline"><input type="checkbox" id="miles"> Distances are in miles</label>
+        <button id="preview" class="ghost">Preview</button>
+        <button id="upload" class="primary">Import</button>
+      </div>
+      <pre id="import-out" class="output" hidden></pre>
+    </div>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
