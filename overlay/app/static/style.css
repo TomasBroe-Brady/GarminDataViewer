@@ -130,7 +130,9 @@ main { padding: 20px; max-width: 1200px; margin: 0 auto; }
 }
 .week-head strong { color: var(--text); font-size: 13px; }
 
-table { width: 100%; border-collapse: collapse; }
+/* Narrow screens scroll the table sideways rather than the whole page. */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 560px; }
 th, td { padding: 9px 16px; text-align: left; border-top: 1px solid var(--line); vertical-align: top; }
 th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
@@ -179,4 +181,5 @@ code { font-family: var(--mono); font-size: .92em; background: var(--panel-2); p
   main { padding: 14px; }
   th, td { padding: 8px 10px; }
   .hide-sm { display: none; }
+  table { min-width: 520px; }
 }

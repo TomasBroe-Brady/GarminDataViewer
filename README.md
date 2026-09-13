@@ -57,6 +57,25 @@ separate strength-training dashboard.
 
 ---
 
+## See it before you connect anything
+
+To look at the overlay with realistic data — no Docker, no Garmin account:
+
+```bash
+uv venv .venv
+uv pip install --python .venv/bin/python -r overlay/requirements.txt
+.venv/bin/python scripts/demo.py
+```
+
+Then open http://localhost:8787. It generates eight weeks of synthetic Venu 3
+data and a matching training plan with deliberate gaps, so you can see all
+three outcomes (completed, missed, unplanned) before committing to setup.
+
+The demo writes to its own `overlay_data/demo.db` and never touches your real
+data.
+
+---
+
 ## Setup
 
 ### Requirements
@@ -203,6 +222,7 @@ overlay/                    this repo's service (Python 3.12 + FastAPI)
     main.py                 REST API
     static/                 the UI (no build step - edit and refresh)
   tests/                    99 tests
+scripts/demo.py             run the UI on synthetic data, no Docker needed
 training_log/               put your spreadsheet here (git-ignored)
 docs/
 ```

@@ -199,6 +199,7 @@ function renderWeeks(weeks, context) {
           ${s.sessions_unplanned ? `<span>${s.sessions_unplanned} unplanned</span>` : ""}
           ${ctxBits.length ? `<span>${esc(ctxBits.join(" · "))}</span>` : ""}
         </div>
+        <div class="table-wrap">
         <table>
           <thead>
             <tr>
@@ -210,6 +211,7 @@ function renderWeeks(weeks, context) {
           </thead>
           <tbody>${w.results.map(rowHtml).join("")}</tbody>
         </table>
+        </div>
       </div>`;
     })
     .join("");
