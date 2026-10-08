@@ -53,6 +53,8 @@ separate strength-training dashboard.
 - **Deltas**: did you run 8.4km against a planned 8km, or 6km?
 - **Recovery context** per week — average sleep, resting HR and overnight HRV,
   so a missed session can be read against how you were actually doing
+- **Ask a question** — "How did my sleep look in weeks I missed a session?" —
+  answered deterministically from your plan and wellness data, no LLM involved
 - Manual override when the matcher gets a pairing wrong
 
 ---
@@ -208,6 +210,8 @@ http://localhost:8787/docs.
 | `DELETE` | `/api/import/{batch}` | Undo a whole import |
 | `POST`/`DELETE` | `/api/match/{id}/link` | Set or clear a manual match |
 | `POST`/`DELETE` | `/api/activities/{id}/ignore` | Ignore or unignore an activity |
+| `GET` | `/api/ask?q=` | Ask a question spanning plan + wellness data, e.g. "How did my sleep look in weeks I missed a session?" |
+| `GET` | `/api/ask/suggestions` | Example questions the asker understands |
 
 ---
 
@@ -224,6 +228,7 @@ overlay/                    this repo's service (Python 3.12 + FastAPI)
     influx.py               read-only InfluxDB client for Garmin actuals
     importer.py             forgiving CSV/Excel training-log parser
     matching.py             plan-vs-actual reconciliation engine
+    nlq.py                  deterministic natural-language question answering
     db.py                   SQLite: planned sessions, manual overrides
     main.py                 REST API
     static/                 the UI (no build step - edit and refresh)
@@ -292,7 +297,7 @@ IANA zone, e.g. `Europe/Dublin`, then `docker compose up -d`.
 
 ## Roadmap
 
-- [ ] Natural-language questions over combined plan and wellness data
+- [x] Natural-language questions over combined plan and wellness data
 - [ ] In-app training-plan editor, so the spreadsheet becomes optional
 - [ ] Planned-vs-actual load tracking (acute:chronic ratio against the plan)
 - [ ] Push the overlay's derived metrics back into InfluxDB for Grafana panels

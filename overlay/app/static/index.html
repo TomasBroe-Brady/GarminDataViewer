@@ -28,6 +28,18 @@
   <section id="summary" class="stat-row" aria-label="Adherence summary"></section>
 
   <section class="panel">
+    <div class="panel-head"><h2>Ask about your training</h2></div>
+    <div class="ask-body">
+      <div class="ask-row">
+        <input type="text" id="ask-input" placeholder="e.g. How did my sleep look in weeks I missed a session?">
+        <button id="ask-btn" class="primary">Ask</button>
+      </div>
+      <div id="ask-suggestions" class="suggestions"></div>
+      <div id="ask-answer" class="answer" hidden></div>
+    </div>
+  </section>
+
+  <section class="panel">
     <div class="panel-head">
       <h2>Plan vs actual</h2>
       <div class="legend">

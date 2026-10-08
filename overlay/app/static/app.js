@@ -250,6 +250,59 @@ async function load() {
   }
 }
 
+/* ----------------------------------------------------------------- ask */
+
+async function loadSuggestions() {
+  try {
+    const res = await fetch("/api/ask/suggestions");
+    const data = await res.json();
+    const host = $("#ask-suggestions");
+    host.innerHTML = (data.suggestions || [])
+      .map((s) => `<span class="suggestion">${esc(s)}</span>`)
+      .join("");
+    host.querySelectorAll(".suggestion").forEach((el) => {
+      el.addEventListener("click", () => {
+        $("#ask-input").value = el.textContent;
+        askQuestion();
+      });
+    });
+  } catch {
+    /* suggestions are a nice-to-have; silently skip if the API is unreachable */
+  }
+}
+
+async function askQuestion() {
+  const q = $("#ask-input").value.trim();
+  if (!q) return;
+
+  const out = $("#ask-answer");
+  out.hidden = false;
+  out.className = "answer";
+  out.textContent = "Thinking…";
+
+  const qs = new URLSearchParams({ q });
+  const start = $("#start").value;
+  const end = $("#end").value;
+  if (start) qs.set("start", start);
+  if (end) qs.set("end", end);
+
+  try {
+    const res = await fetch(`/api/ask?${qs}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || `API returned ${res.status}`);
+    out.className = data.understood ? "answer" : "answer unrecognised";
+    out.textContent = data.text;
+  } catch (err) {
+    out.className = "answer unrecognised";
+    out.textContent = `Could not get an answer: ${err.message}`;
+  }
+}
+
+$("#ask-btn").addEventListener("click", askQuestion);
+$("#ask-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") askQuestion();
+});
+
 /* ------------------------------------------------------------- import */
 
 async function sendFile(dryRun) {
@@ -293,3 +346,4 @@ $("#start").addEventListener("change", load);
 $("#end").addEventListener("change", load);
 
 load();
+loadSuggestions();

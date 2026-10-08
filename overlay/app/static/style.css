@@ -157,6 +157,40 @@ tbody tr:hover { background: rgba(255,255,255,.02); }
 .small { font-size: 12px; }
 .reasons { color: var(--muted); font-size: 11px; margin-top: 3px; }
 
+/* ------------------------------------------------------------------ ask */
+.ask-body { padding: 16px; }
+.ask-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.ask-row input[type="text"] {
+  flex: 1;
+  min-width: 220px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font: inherit;
+}
+.suggestions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.suggestion {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.suggestion:hover { color: var(--text); border-color: var(--accent); }
+.answer {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 13.5px;
+}
+.answer.unrecognised { color: var(--muted); border-color: var(--warn); }
+
 /* ---------------------------------------------------------------- import */
 .import-body { padding: 16px; }
 .import-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }

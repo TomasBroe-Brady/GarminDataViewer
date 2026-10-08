@@ -23,6 +23,7 @@ from .config import get_settings
 from .importer import ImportResult, build_rows, read_table
 from .influx import InfluxReader, InfluxUnavailable
 from .matching import PlannedSession, reconcile, summarise, week_start
+from .nlq import SUGGESTIONS, answer_question
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("overlay")
@@ -188,6 +189,43 @@ def activities(
         d["ignored"] = a.activity_id in ignored
         out.append(d)
     return {"range": {"start": lo, "end": hi}, "activities": out}
+
+
+# --------------------------------------------------------------------------
+# Natural-language questions
+# --------------------------------------------------------------------------
+
+@app.get("/api/ask/suggestions")
+def ask_suggestions() -> dict[str, Any]:
+    return {"suggestions": SUGGESTIONS}
+
+
+@app.get("/api/ask")
+def ask(
+    q: str = Query(..., min_length=3, description="A question about your plan vs wellness data"),
+    start: str | None = Query(None),
+    end: str | None = Query(None),
+) -> dict[str, Any]:
+    lo, hi = _default_range(start, end)
+
+    with db.get_conn() as conn:
+        planned_rows = db.fetch_planned(conn, lo, hi)
+        overrides = db.fetch_overrides(conn)
+        ignored = db.fetch_ignored(conn)
+
+    reader = InfluxReader()
+    try:
+        actuals = reader.activities(lo, hi)
+        context = reader.daily_context(lo, hi)
+    except InfluxUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+
+    results = reconcile(
+        _planned_objects(planned_rows), actuals, overrides=overrides, ignored_activity_ids=ignored
+    )
+    answer = answer_question(q, results, context)
+    answer["range"] = {"start": lo, "end": hi}
+    return answer
 
 
 # --------------------------------------------------------------------------

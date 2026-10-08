@@ -274,6 +274,50 @@ class TestOverview:
         assert ctx[BASE_DAY]["sleep_hours"] == pytest.approx(7.5, abs=0.01)
 
 
+class TestAsk:
+    @pytest.fixture()
+    def loaded(self, client):
+        client.post("/api/import", files={"file": ("plan.csv", PLAN_CSV, "text/csv")})
+        return client
+
+    def test_suggestions_endpoint(self, loaded):
+        r = loaded.get("/api/ask/suggestions")
+        assert r.status_code == 200
+        assert len(r.json()["suggestions"]) > 0
+
+    def test_metric_question_is_answered(self, loaded):
+        r = loaded.get(
+            "/api/ask",
+            params={"q": "What's my resting heart rate overall?",
+                    "start": "2026-03-01", "end": "2026-03-10"},
+        )
+        assert r.status_code == 200
+        body = r.json()
+        assert body["understood"] is True
+        assert body["data"]["metric"] == "resting_hr"
+        assert body["data"]["value"] == 48.0
+
+    def test_missed_count_question_is_answered(self, loaded):
+        r = loaded.get(
+            "/api/ask",
+            params={"q": "How many sessions did I miss?",
+                    "start": "2026-03-01", "end": "2026-03-10"},
+        )
+        assert r.json()["data"]["count"] == 1
+
+    def test_unrecognised_question(self, loaded):
+        r = loaded.get(
+            "/api/ask",
+            params={"q": "What's the weather like?",
+                    "start": "2026-03-01", "end": "2026-03-10"},
+        )
+        assert r.json()["understood"] is False
+
+    def test_question_too_short_is_rejected(self, loaded):
+        r = loaded.get("/api/ask", params={"q": "hi"})
+        assert r.status_code == 422
+
+
 class TestManualCorrections:
     @pytest.fixture()
     def loaded(self, client):
